@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Architecture deep-dive of the High-Performance Multi-threaded HTTP Server in C++17." />
+  <title>HPHTTPServer – Architecture</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="nav-icon">⚡</span>
+      <span class="nav-title">HPHTTPServer</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="/">Home</a></li>
+      <li><a href="/about.html" class="active">About</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <!-- ===== Architecture Overview ======================================== -->
+    <section class="section hero-small">
+      <div class="badge">Architecture Deep-Dive</div>
+      <h1 class="hero-title-sm">
+        How the Server Works
+      </h1>
+      <p class="hero-sub">
+        A component-by-component walkthrough of the request lifecycle,
+        thread model, and key design decisions.
+      </p>
+    </section>
+
+    <!-- Request Lifecycle -->
+    <section class="section">
+      <h2 class="section-title">Request Lifecycle</h2>
+      <div class="lifecycle">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h3>accept()</h3>
+            <p>The main thread blocks on <code>accept()</code>. When a client
+               connects, a file descriptor and IP address are captured.</p>
+          </div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h3>ThreadPool::submit()</h3>
+            <p>The fd is wrapped in a lambda and pushed into the FIFO task
+               queue. A sleeping worker is woken via <code>notify_one()</code>.</p>
+          </div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h3>parse_request()</h3>
+            <p>The worker reads the socket incrementally using
+               <code>select()</code> + <code>recv()</code>, assembling the
+               request until <code>\r\n\r\n</code> is found.</p>
+          </div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h3>Router::route()</h3>
+            <p>URI is decoded, sanitised, and resolved to a filesystem path.
+               File is read, MIME type detected, and a 200/403/404/500
+               response is built.</p>
+          </div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <h3>send() + close()</h3>
+            <p>Headers then body are sent in 64 KiB chunks via
+               <code>send(MSG_NOSIGNAL)</code>. The socket is closed and
+               metrics are updated atomically.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Thread Model -->
+    <section class="section section-dark">
+      <h2 class="section-title">Thread Model</h2>
+      <div class="thread-model">
+        <div class="thread main-thread">
+          <div class="thread-label">Main Thread</div>
+          <div class="thread-ops">
+            <code>socket() → bind() → listen()</code><br/>
+            <code>accept() loop</code><br/>
+            <code>pool.submit(λ)</code>
+          </div>
+        </div>
+        <div class="thread-arrow">⟶ queue ⟶</div>
+        <div class="worker-pool">
+          <div class="thread worker">
+            <div class="thread-label">Worker 0</div>
+            <div class="thread-ops">parse → route → send</div>
+          </div>
+          <div class="thread worker">
+            <div class="thread-label">Worker 1</div>
+            <div class="thread-ops">parse → route → send</div>
+          </div>
+          <div class="thread worker">
+            <div class="thread-label">Worker N-1</div>
+            <div class="thread-ops">parse → route → send</div>
+          </div>
+        </div>
+        <div class="thread-arrow">⟶ log ⟶</div>
+        <div class="thread logger-thread">
+          <div class="thread-label">Logger Thread</div>
+          <div class="thread-ops">queue.swap() → file.write()</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Component Table -->
+    <section class="section">
+      <h2 class="section-title">Component Responsibilities</h2>
+      <div class="table-wrapper">
+        <table class="comp-table">
+          <thead>
+            <tr>
+              <th>Class</th>
+              <th>File</th>
+              <th>Responsibility</th>
+              <th>Key API</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>Server</code></td>
+              <td>server.cpp</td>
+              <td>Orchestrate all subsystems, run accept loop</td>
+              <td><code>run() / stop()</code></td>
+            </tr>
+            <tr>
+              <td><code>SocketManager</code></td>
+              <td>socket.cpp</td>
+              <td>POSIX socket lifecycle (socket/bind/listen/accept)</td>
+              <td><code>setup() / accept_client()</code></td>
+            </tr>
+            <tr>
+              <td><code>ThreadPool</code></td>
+              <td>threadpool.cpp</td>
+              <td>Fixed worker threads + FIFO task queue</td>
+              <td><code>submit() / stop()</code></td>
+            </tr>
+            <tr>
+              <td><code>Parser</code></td>
+              <td>parser.cpp</td>
+              <td>HTTP/1.1 request parsing (free function)</td>
+              <td><code>parse_request()</code></td>
+            </tr>
+            <tr>
+              <td><code>Router</code></td>
+              <td>router.cpp</td>
+              <td>URI routing, file serving, MIME, error pages</td>
+              <td><code>route() / send_response()</code></td>
+            </tr>
+            <tr>
+              <td><code>Logger</code></td>
+              <td>logger.cpp</td>
+              <td>Async I/O thread, millisecond timestamps</td>
+              <td><code>log() / log_request()</code></td>
+            </tr>
+            <tr>
+              <td><code>Config</code></td>
+              <td>config.cpp</td>
+              <td>Parse config.json, expose typed fields</td>
+              <td><code>Config::from_file()</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Design Decisions -->
+    <section class="section section-dark">
+      <h2 class="section-title">Key Design Decisions</h2>
+      <div class="decision-grid">
+        <div class="decision-card">
+          <h3>🔄 Fixed Pool vs. Thread-per-Request</h3>
+          <p>Thread creation (≈ 50–200 µs on Linux) would dominate latency for
+             short requests. A fixed pool amortises that cost to zero and bounds
+             memory usage regardless of connection rate.</p>
+        </div>
+        <div class="decision-card">
+          <h3>📋 Queue Swap in Logger</h3>
+          <p>The I/O thread swaps the shared queue with a local empty queue under
+             the mutex, then releases the lock before writing to disk. Workers
+             contend only for a pointer swap, not a file write.</p>
+        </div>
+        <div class="decision-card">
+          <h3>⚛️ Atomic Stats Counters</h3>
+          <p>Performance counters (requests, latency, concurrency) use
+             <code>std::atomic</code> instead of a mutex. This avoids false
+             sharing and allows lock-free updates from all worker threads
+             simultaneously.</p>
+        </div>
+        <div class="decision-card">
+          <h3>🛡️ Double Traversal Guard</h3>
+          <p>Path sanitisation happens twice: in the parser (lexically) and
+             in the router (after <code>weakly_canonical()</code> resolution).
+             Both layers must agree the path is under document_root.</p>
+        </div>
+        <div class="decision-card">
+          <h3>🔌 SO_REUSEADDR</h3>
+          <p>The listening socket sets <code>SO_REUSEADDR</code> so that after a
+             crash or restart, the port is available immediately instead of
+             waiting up to 4 minutes for TIME_WAIT to expire.</p>
+        </div>
+        <div class="decision-card">
+          <h3>📡 SIGPIPE Ignored</h3>
+          <p>Writing to a socket whose remote end has closed raises SIGPIPE,
+             which by default kills the process. We ignore it globally and
+             instead detect write errors via the return value of
+             <code>send()</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Future Work -->
+    <section class="section">
+      <h2 class="section-title">Future Enhancements</h2>
+      <div class="future-grid">
+        <div class="future-item"><span>🔁</span> HTTP Keep-Alive (persistent connections)</div>
+        <div class="future-item"><span>⚡</span> epoll-based I/O multiplexing (C10k)</div>
+        <div class="future-item"><span>🔐</span> TLS/HTTPS via OpenSSL</div>
+        <div class="future-item"><span>📦</span> Gzip/Brotli response compression</div>
+        <div class="future-item"><span>🗄️</span> In-memory LRU file cache</div>
+        <div class="future-item"><span>🔑</span> Basic / JWT authentication</div>
+        <div class="future-item"><span>🚦</span> Per-IP rate limiting (token bucket)</div>
+        <div class="future-item"><span>↩️</span> Reverse proxy support</div>
+        <div class="future-item"><span>🐳</span> Docker container + compose file</div>
+        <div class="future-item"><span>📈</span> Prometheus metrics endpoint</div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Built with C++17 · POSIX · CMake &nbsp;|&nbsp; Portfolio Project</p>
+  </footer>
+
+</body>
+</html>

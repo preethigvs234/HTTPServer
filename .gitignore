@@ -1,0 +1,35 @@
+# Build artifacts
+build/
+build-debug/
+build-release/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.make
+CTestTestfile.cmake
+Testing/
+
+# Compiled objects and binaries
+*.o
+*.a
+*.so
+*.so.*
+HTTPServer
+
+# IDE / editor directories
+.vscode/
+.idea/
+*.code-workspace
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs (keep the placeholder but ignore real runtime logs)
+logs/*.log
+!logs/server.log
+
+# OS files
+Thumbs.db

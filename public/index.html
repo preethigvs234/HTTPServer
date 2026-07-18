@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="High-Performance Multi-threaded HTTP Server built in C++17 with POSIX sockets and a thread pool." />
+  <title>HPHTTPServer – Home</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+  <!-- ===== Navigation ===================================================== -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="nav-icon">⚡</span>
+      <span class="nav-title">HPHTTPServer</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="/" class="active">Home</a></li>
+      <li><a href="/about.html">About</a></li>
+    </ul>
+  </nav>
+
+  <!-- ===== Hero =========================================================== -->
+  <header class="hero">
+    <div class="hero-content">
+      <div class="badge">C++17 · POSIX Sockets · Thread Pool · Linux</div>
+      <h1 class="hero-title">
+        High-Performance<br/>
+        <span class="gradient-text">Multi-threaded</span><br/>
+        HTTP Server
+      </h1>
+      <p class="hero-sub">
+        A production-quality static-file HTTP/1.1 server demonstrating
+        operating systems, networking, multithreading, and modern C++ skills.
+      </p>
+      <div class="hero-actions">
+        <a href="/about.html" class="btn btn-primary">Learn Architecture</a>
+        <a href="https://github.com" class="btn btn-ghost">View on GitHub</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="terminal">
+        <div class="terminal-bar">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+          <span class="terminal-title">HTTPServer</span>
+        </div>
+        <pre class="terminal-body">
+╔══════════════════════════════════════════╗
+║  High-Performance Multi-threaded HTTP    ║
+║  Server v1.0  –  port  8080             ║
+╚══════════════════════════════════════════╝
+  Workers  : 8
+  DocRoot  : public
+  Log file : logs/server.log
+  Press Ctrl+C to stop
+
+[2024-01-15 10:23:01.042] [REQUEST]
+  127.0.0.1 GET /index.html 200 3ms
+[2024-01-15 10:23:01.051] [REQUEST]
+  127.0.0.1 GET /styles.css 200 1ms
+<span class="blink">█</span>
+        </pre>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Feature Grid =================================================== -->
+  <main>
+    <section class="section">
+      <h2 class="section-title">Core Features</h2>
+      <div class="feature-grid">
+
+        <div class="feature-card">
+          <div class="feature-icon">🧵</div>
+          <h3>Fixed Thread Pool</h3>
+          <p>Worker threads are created once at startup. Requests are dispatched
+             via a lock-free-style FIFO queue guarded by a condition variable –
+             zero thread creation overhead per request.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🔌</div>
+          <h3>POSIX Sockets</h3>
+          <p>Raw <code>socket() → bind() → listen() → accept()</code> pipeline.
+             <code>SO_REUSEADDR</code> enables instant restart.
+             EINTR-safe accept loop survives signals gracefully.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📨</div>
+          <h3>HTTP/1.1 Parser</h3>
+          <p>Incremental socket reader with <code>select()</code>-based timeout.
+             Parses method, URI, version, and all headers. URL-decodes paths and
+             sanitises against directory traversal.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🛡️</div>
+          <h3>Synchronisation</h3>
+          <p>RAII locking (<code>std::lock_guard</code>, <code>unique_lock</code>),
+             condition variables, and atomic counters eliminate data races.
+             Verified with AddressSanitizer + ThreadSanitizer.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📁</div>
+          <h3>Static File Server</h3>
+          <p>Serves HTML, CSS, JS, PNG, JPG, PDF and more. Automatic MIME
+             detection, proper Content-Length, and chunked 64 KiB sends for
+             large files.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3>Security</h3>
+          <p>Double directory-traversal guard using <code>std::filesystem</code>
+             canonicalisation. <code>SIGPIPE</code> ignored to prevent crashes.
+             Max header size enforced to resist memory exhaustion.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Metrics</h3>
+          <p>Atomic counters track total requests, average latency, peak
+             concurrent connections, and requests-per-second. Printed on
+             clean shutdown.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📝</div>
+          <h3>Async Logger</h3>
+          <p>Dedicated I/O thread drains a queue with the swap trick –
+             worker threads never block on disk writes. Timestamps at
+             millisecond resolution.</p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Quick Start -->
+    <section class="section section-dark">
+      <h2 class="section-title">Quick Start</h2>
+      <div class="code-block">
+        <div class="code-header">
+          <span>bash</span>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><code><span class="comment"># Build</span>
+mkdir build &amp;&amp; cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
+
+<span class="comment"># Run</span>
+./HTTPServer               <span class="comment"># uses config.json</span>
+./HTTPServer myconfig.json <span class="comment"># custom config</span>
+
+<span class="comment"># Test</span>
+curl http://localhost:8080/
+curl -I http://localhost:8080/styles.css
+curl http://localhost:8080/nonexistent</code></pre>
+      </div>
+    </section>
+
+    <!-- HTTP Status Codes -->
+    <section class="section">
+      <h2 class="section-title">HTTP Status Codes</h2>
+      <div class="status-grid">
+        <div class="status-card status-200">
+          <div class="status-num">200</div>
+          <div class="status-text">OK – file found and served</div>
+        </div>
+        <div class="status-card status-404">
+          <div class="status-num">404</div>
+          <div class="status-text">Not Found – file absent</div>
+        </div>
+        <div class="status-card status-403">
+          <div class="status-num">403</div>
+          <div class="status-text">Forbidden – traversal / no read permission</div>
+        </div>
+        <div class="status-card status-500">
+          <div class="status-num">500</div>
+          <div class="status-text">Internal Server Error</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== Footer ========================================================= -->
+  <footer class="footer">
+    <p>Built with C++17 · POSIX · CMake &nbsp;|&nbsp; Portfolio Project</p>
+  </footer>
+
+  <script>
+    function copyCode(btn) {
+      const code = btn.closest('.code-block').querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+      });
+    }
+  </script>
+</body>
+</html>

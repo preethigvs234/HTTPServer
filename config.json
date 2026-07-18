@@ -1,0 +1,8 @@
+{
+    "port":             8080,
+    "workers":          8,
+    "document_root":    "public",
+    "log_file":         "logs/server.log",
+    "backlog":          128,
+    "recv_timeout_ms":  5000
+}

@@ -1,0 +1,12 @@
+# Server Log
+# This file is created and managed by the Logger module.
+# Each line follows the format:
+#   [YYYY-MM-DD HH:MM:SS.mmm] [LEVEL] MESSAGE
+#   [YYYY-MM-DD HH:MM:SS.mmm] [REQUEST] CLIENT_IP METHOD URI STATUS LATENCYms
+#
+# Example entries (populated at runtime):
+# [2024-01-15 10:23:00.001] [INFO ] Server started on port 8080 with 8 workers
+# [2024-01-15 10:23:01.042] [REQUEST] 127.0.0.1 GET /index.html 200 3ms
+# [2024-01-15 10:23:01.051] [REQUEST] 127.0.0.1 GET /styles.css 200 1ms
+# [2024-01-15 10:23:05.123] [REQUEST] 192.168.1.10 GET /about.html 200 4ms
+# [2024-01-15 10:23:10.200] [REQUEST] 10.0.0.5 GET /nonexistent 404 2ms
