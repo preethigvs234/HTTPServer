@@ -286,4 +286,4 @@ bash tests/run_tests.sh
 
 ## License
 
-[MIT](LICENSE) © 2024 Preethi
+[MIT](LICENSE) © 2026 Preethi
