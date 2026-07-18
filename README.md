@@ -5,7 +5,6 @@ A production-quality **HTTP/1.1 static-file server** written in **C++17**, built
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/)
 [![CMake](https://img.shields.io/badge/Build-CMake-green.svg)](https://cmake.org/)
 [![Platform](https://img.shields.io/badge/Platform-Linux-orange.svg)](https://www.linux.org/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
@@ -284,6 +283,3 @@ bash tests/run_tests.sh
 
 ---
 
-## License
-
-[MIT](LICENSE) © 2026 Preethi
