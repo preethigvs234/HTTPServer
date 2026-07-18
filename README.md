@@ -4,7 +4,7 @@ A production-quality **HTTP/1.1 static-file server** written in **C++17**, built
 
 [![C++17](https://img.shields.io/badge/C%2B%2B-17-blue.svg)](https://isocpp.org/)
 [![CMake](https://img.shields.io/badge/Build-CMake-green.svg)](https://cmake.org/)
-[![Platform](https://img.shields.io/badge/Platform-Windows-orange.svg)]
+[![Platform](https://img.shields.io/badge/Platform-Windows-orange.svg)](https://windows.org/)
 
 ---
 
