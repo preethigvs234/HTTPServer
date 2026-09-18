@@ -4,13 +4,11 @@
  */
 
 #pragma once
-
 #include "parser.h"
 #include <string>
 #include <unordered_map>
 
 namespace http {
-
 /** @brief A fully-built HTTP response ready to serialise and send. */
 struct HttpResponse {
     int         status_code   = 200;
